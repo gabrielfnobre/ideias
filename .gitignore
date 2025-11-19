@@ -1,0 +1,14 @@
+# IDEs
+.vscode/
+.idea/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Local Storage (Emails)
+storage/mails/*.txt
+!storage/mails/.gitkeep
+
+# Config (if we had any sensitive ones, though currently hardcoded in kernel.php - user should be warned)
+# For now, we don't have a separate config file, but good to be ready.

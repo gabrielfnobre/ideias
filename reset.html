@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Redefinir Senha</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { theme: { extend: { fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] } } } }
+    </script>
+  </head>
+  <body class="bg-white text-gray-800 font-sans">
+    <div class="max-w-md mx-auto p-6">
+      <h1 class="text-2xl font-semibold text-gray-900">Redefinir Senha</h1>
+      <p class="text-sm text-gray-600 mt-1">Informe uma nova senha para sua conta.</p>
+      <div id="msg" class="mt-3 text-sm"></div>
+      <div class="space-y-3 mt-4">
+        <div class="space-y-2">
+          <label class="text-sm text-gray-700">Nova senha</label>
+          <input id="pwd" type="password" class="w-full rounded-md border border-gray-300 px-3 py-2" placeholder="Crie uma senha segura" />
+        </div>
+        <div class="flex justify-end">
+          <button id="btn" class="text-sm bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">Redefinir</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const params = new URLSearchParams(window.location.search)
+      const uid = parseInt(params.get('uid')||'0',10)
+      const token = params.get('token')||''
+      const btn = document.getElementById('btn')
+      const msg = document.getElementById('msg')
+      btn.addEventListener('click', async () => {
+        const pwd = document.getElementById('pwd').value
+        msg.textContent = ''
+        try {
+          const r = await fetch('/api/index.php?route=auth/reset', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uid, token, password: pwd }) })
+          const j = await r.json()
+          if (j.ok) { msg.textContent = 'Senha redefinida com sucesso'; msg.className='mt-3 text-sm text-teal-700' } else { msg.textContent = 'Erro: '+(j.error||''); msg.className='mt-3 text-sm text-red-700' }
+        } catch(e) { msg.textContent = 'Erro de rede'; msg.className='mt-3 text-sm text-red-700' }
+      })
+    </script>
+  </body>
+</html>
