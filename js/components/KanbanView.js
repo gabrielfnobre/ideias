@@ -50,7 +50,8 @@ export const KanbanView = ({ onOpenAuth }) => {
         { id: 'EM_ELABORACAO', label: 'Em Elaboração', color: 'bg-slate-50 border-slate-200' },
         { id: 'EM_TRIAGEM', label: 'Triagem', color: 'bg-blue-50/50 border-blue-100' },
         { id: 'EM_AVALIACAO', label: 'Em Avaliação', color: 'bg-amber-50/50 border-amber-100' },
-        { id: 'APROVADA', label: 'Aprovada', color: 'bg-emerald-50/50 border-emerald-100' }
+        { id: 'APROVADA', label: 'Aprovada', color: 'bg-emerald-50/50 border-emerald-100' },
+        { id: 'REJEITADA', label: 'Rejeitada', color: 'bg-rose-50/50 border-rose-100' }
     ];
 
     return e('div', { className: "h-[calc(100vh-140px)] overflow-y-auto md:overflow-x-auto pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500" },

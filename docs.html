@@ -270,7 +270,7 @@ CREATE TABLE ideas (
     user_id INT,
     title VARCHAR(255),
     description TEXT,
-    status ENUM('EM_ELABORACAO', 'EM_TRIAGEM', 'EM_AVALIACAO', 'APROVADA'),
+    status VARCHAR(32) DEFAULT 'EM_ELABORACAO', -- 'EM_ELABORACAO', 'EM_TRIAGEM', 'EM_AVALIACAO', 'APROVADA', 'REJEITADA'
     votes_count INT DEFAULT 0,
     created_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id)
