@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação Técnica - PROENG Innovation Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .prose h2 {
+            margin-top: 2em;
+            margin-bottom: 1em;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #1e293b;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.5em;
+        }
+
+        .prose h3 {
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+            font-size: 1.25em;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .prose p {
+            margin-bottom: 1em;
+            line-height: 1.75;
+            color: #475569;
+        }
+
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+            color: #475569;
+        }
+
+        .prose li {
+            margin-bottom: 0.5em;
+        }
+
+        .prose code {
+            background-color: #f1f5f9;
+            padding: 0.2em 0.4em;
+            rounded: 0.25em;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875em;
+            color: #0f172a;
+        }
+
+        .prose pre {
+            background-color: #1e293b;
+            padding: 1em;
+            border-radius: 0.5em;
+            overflow-x: auto;
+            margin-bottom: 1.5em;
+        }
+
+        .prose pre code {
+            background-color: transparent;
+            color: #e2e8f0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-slate-200 fixed h-full overflow-y-auto hidden md:block">
+            <div class="p-6">
+                <h1 class="text-xl font-bold text-brand-600 mb-1">Innovation Hub</h1>
+                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Docs v1.0</p>
+            </div>
+            <nav class="px-4 space-y-1">
+                <a href="#intro"
+                    class="block px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">Introdução</a>
+                <a href="#architecture"
+                    class="block px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">Arquitetura</a>
+                <a href="#frontend"
+                    class="block px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">Frontend</a>
+                <a href="#backend"
+                    class="block px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">Backend
+                    API</a>
+                <a href="#database"
+                    class="block px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">Banco de
+                    Dados</a>
+                <a href="#setup"
+                    class="block px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">Instalação</a>
+            </nav>
+        </aside>
+
+        <!-- Content -->
+        <main class="flex-1 md:ml-64 p-8 max-w-5xl mx-auto">
+
+            <section id="intro" class="mb-16">
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
+                    <h1 class="text-4xl font-bold text-slate-900 mb-4">Documentação Técnica</h1>
+                    <p class="text-lg text-slate-600">
+                        Guia completo para desenvolvedores sobre a arquitetura, componentes e manutenção do
+                        <strong>PROENG Innovation Hub</strong>.
+                    </p>
+                    <div class="mt-6 flex gap-4">
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">React</span>
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">PHP
+                            8</span>
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-cyan-100 text-cyan-800">Tailwind
+                            CSS</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="prose max-w-none">
+
+                <section id="architecture" class="scroll-mt-20">
+                    <h2>🏗️ Arquitetura do Sistema</h2>
+                    <p>O sistema utiliza uma arquitetura <strong>Monolítica Modular</strong>, onde o frontend (SPA) é
+                        servido pelo mesmo servidor que a API, mas mantém uma separação clara de responsabilidades.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="!mt-0 text-brand-600">Frontend (Client-Side)</h3>
+                            <ul class="text-sm">
+                                <li><strong>Core:</strong> React 18 (via CDN + ES Modules)</li>
+                                <li><strong>Estilos:</strong> Tailwind CSS (via CDN)</li>
+                                <li><strong>Router:</strong> Estado local (View State)</li>
+                                <li><strong>Estrutura:</strong> Componentes funcionais em <code>js/components/</code>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="!mt-0 text-brand-600">Backend (Server-Side)</h3>
+                            <ul class="text-sm">
+                                <li><strong>Linguagem:</strong> PHP 7.4+ (Puro, sem frameworks pesados)</li>
+                                <li><strong>Banco:</strong> MySQL / MariaDB</li>
+                                <li><strong>Padrão:</strong> Front Controller (<code>api/index.php</code>)</li>
+                                <li><strong>Lógica:</strong> Classe <code>Kernel</code> (<code>api/kernel.php</code>)
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="frontend" class="scroll-mt-20">
+                    <h2>🎨 Frontend</h2>
+                    <p>O frontend é construído sem build tools complexos (como Webpack) para facilitar a edição rápida e
+                        o deploy em ambientes compartilhados (XAMPP/Hospedagem comum).</p>
+
+                    <h3>Estrutura de Pastas</h3>
+                    <pre><code>/js
+  /components      # Componentes React (Views e UI)
+    /ui            # Componentes base (Button, Card, Modal)
+    Header.js      # Navegação principal
+    HomeView.js    # Lista de ideias
+    KanbanView.js  # Quadro de gestão (Drag & Drop)
+    ...
+  /services
+    api.js         # Camada de comunicação HTTP (fetch wrapper)
+  app.js           # Ponto de entrada e Roteador simples</code></pre>
+
+                    <h3>Principais Componentes</h3>
+                    <ul>
+                        <li><strong>KanbanView.js</strong>: Implementa Drag & Drop nativo do HTML5. Gerencia estados
+                            otimistas para movimentação de cards.</li>
+                        <li><strong>IdeaDetailView.js</strong>: Exibe detalhes, comentários e sistema de votação.
+                            Adaptável para funcionar dentro de um Modal.</li>
+                        <li><strong>AuthModal.js</strong>: Gerencia Login e Cadastro. Utiliza callbacks para atualizar o
+                            estado do usuário globalmente.</li>
+                    </ul>
+                </section>
+
+                <section id="backend" class="scroll-mt-20">
+                    <h2>⚙️ Backend API</h2>
+                    <p>A API segue o padrão RESTful simplificado. Todas as requisições passam por
+                        <code>api/index.php</code> que roteia para os métodos da classe <code>Kernel</code>.</p>
+
+                    <h3>Endpoints Principais</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-left text-sm whitespace-nowrap">
+                            <thead class="uppercase tracking-wider border-b-2 border-slate-200 bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3">Método</th>
+                                    <th class="px-4 py-3">Rota (query param)</th>
+                                    <th class="px-4 py-3">Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                <tr>
+                                    <td class="px-4 py-3 font-mono text-green-600">GET</td>
+                                    <td class="px-4 py-3 font-mono">ideas/list</td>
+                                    <td class="px-4 py-3">Lista todas as ideias (com filtros)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-mono text-blue-600">POST</td>
+                                    <td class="px-4 py-3 font-mono">ideas/create</td>
+                                    <td class="px-4 py-3">Cria uma nova ideia (Requer Auth)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-mono text-blue-600">POST</td>
+                                    <td class="px-4 py-3 font-mono">ideas/vote</td>
+                                    <td class="px-4 py-3">Vota/Desvota em uma ideia</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-mono text-blue-600">POST</td>
+                                    <td class="px-4 py-3 font-mono">ideas/update_status</td>
+                                    <td class="px-4 py-3">Move ideia no Kanban (Admin/Autor)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-mono text-green-600">GET</td>
+                                    <td class="px-4 py-3 font-mono">stats/dashboard</td>
+                                    <td class="px-4 py-3">Retorna KPIs e dados para gráficos</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="database" class="scroll-mt-20">
+                    <h2>💾 Banco de Dados</h2>
+                    <p>O esquema é relacional e normalizado. As principais tabelas são:</p>
+
+                    <h3>Schema Resumido</h3>
+                    <pre><code class="language-sql">
+-- Usuários do sistema
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255),
+    points INT DEFAULT 0, -- Gamificação
+    ...
+);
+
+-- Ideias submetidas
+CREATE TABLE ideas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    title VARCHAR(255),
+    description TEXT,
+    status ENUM('EM_ELABORACAO', 'EM_TRIAGEM', 'EM_AVALIACAO', 'APROVADA'),
+    votes_count INT DEFAULT 0,
+    created_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Votos (Relacionamento N:N)
+CREATE TABLE votes (
+    user_id INT,
+    idea_id INT,
+    PRIMARY KEY (user_id, idea_id)
+);
+                    </code></pre>
+                </section>
+
+                <section id="setup" class="scroll-mt-20">
+                    <h2>🚀 Instalação e Deploy</h2>
+
+                    <h3>Ambiente de Desenvolvimento</h3>
+                    <ol>
+                        <li>
+                            <strong>Clone o Repositório:</strong>
+                            <pre><code>git clone https://github.com/engfabio/ideias.git</code></pre>
+                        </li>
+                        <li>
+                            <strong>Configure o Banco:</strong>
+                            <p>Edite <code>api/kernel.php</code> e ajuste as credenciais do PDO no construtor:</p>
+                            <pre><code>$this->db = new PDO('mysql:host=localhost;dbname=SEU_DB', 'USER', 'PASS');</code></pre>
+                        </li>
+                        <li>
+                            <strong>Popular Dados (Seed):</strong>
+                            <p>Acesse <code>/api/index.php?route=admin/seed</code> para criar as tabelas e inserir dados
+                                de teste.</p>
+                        </li>
+                        <li>
+                            <strong>Rodar:</strong>
+                            <p>Use um servidor Apache/Nginx apontando para a pasta raiz ou use o PHP built-in server
+                                (apenas para testes rápidos):</p>
+                            <pre><code>php -S localhost:8000</code></pre>
+                        </li>
+                    </ol>
+                </section>
+
+            </div>
+
+            <footer class="mt-20 pt-8 border-t border-slate-200 text-center text-slate-500 text-sm">
+                <p>&copy; 2024 PROENG Innovation Hub. Documentação gerada automaticamente.</p>
+            </footer>
+        </main>
+    </div>
+
+</body>
+
+</html>
