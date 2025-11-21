@@ -136,14 +136,12 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
                 userIds.forEach((uid, idx) => {
                     if (results[idx]) usersObj[uid] = results[idx];
                 });
-                console.log(usersObj)
                 setUsersList(usersObj);
             }
         }
         fetchUsers();
         return () => { ativo = false; };
     }, [commentsList]);
-
 
 
     /**
@@ -327,7 +325,7 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
                 e(Card, { key: key, className: "p-4" },
                     e('div', { className: "flex justify-between items-start mb-2" },
                         // Nome do autor do comentário (por padrão "Usuário")
-                        e('div', { className: "font-bold text-slate-700" }, `#${usersList[key]}`),
+                        e('div', { className: "font-bold text-slate-700" }, `#${usersList[key] ? usersList[key].name : key}`),
                         // Data/hora do comentário (formato local)
                         e('div', { className: "text-xs text-slate-400" }, new Date(value.created_at).toLocaleString())
                     ),
