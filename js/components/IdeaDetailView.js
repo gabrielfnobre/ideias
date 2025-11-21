@@ -74,7 +74,6 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
             try {
                 // api.getIdea supõe que traz a ideia atualizada do backend
                 const resp = await api.getIdea(idea.id);
-                console.log(await api.getLeaderboard())
                 if (resp && resp.ok && ativo) {
                     setIdea(prev => ({
                         ...prev,
@@ -93,6 +92,60 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
     // O array de dependências controla quando o efeito roda. Aqui depende só do ID da ideia.
     }, [idea.id]);
 
+    const [voteCount, setVoteCount] = React.useState(undefined);
+
+    React.useEffect(() => {
+        let ativo = true;
+        async function fetchVotes() {
+            const res = await api.countVotes(idea.id);
+            if (ativo && typeof res !== 'undefined') {
+                setVoteCount(res);
+            }
+        }
+        fetchVotes();
+        return () => { ativo = false };
+    }, [idea.id]);
+
+    // Novo useEffect para trazer a lista de comentários via listComments
+    const [commentsList, setCommentsList] = React.useState([]);
+
+    React.useEffect(() => {
+        let ativo = true;
+        async function fetchComments() {
+            const res = [await api.listComments(idea.id)];
+            if (ativo && res && Array.isArray(res)) {
+                setCommentsList(res);
+            }
+        }
+        fetchComments();
+        return () => { ativo = false };
+    }, [idea.id]);
+
+    // Novo useEffect para buscar dados de usuários (autores dos comentários) usando getUserById
+    const [usersList, setUsersList] = React.useState({});
+    React.useEffect(() => {
+        let ativo = true;
+        async function fetchUsers() {
+            if (!commentsList || !commentsList[0]) return;
+            const userIds = Object.keys(commentsList[0]);
+            const userPromises = userIds.map(uid => api.getUserById(uid));
+            const results = await Promise.all(userPromises);
+            if (ativo) {
+                // results é um array, cada item é user (pode ser null/undefined se não achou)
+                const usersObj = {};
+                userIds.forEach((uid, idx) => {
+                    if (results[idx]) usersObj[uid] = results[idx];
+                });
+                console.log(usersObj)
+                setUsersList(usersObj);
+            }
+        }
+        fetchUsers();
+        return () => { ativo = false; };
+    }, [commentsList]);
+
+
+
     /**
      * Função: handleVote
      * --------------------------------------------------------------------------
@@ -103,6 +156,7 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
     const handleVote = async () => {
         const r = await api.vote(idea.id);
         if (r.ok) {
+            setVoteCount(r.votes);
             setIdea(prev => ({ ...prev, votes: r.votes }));
         } else if (r.error === 'nao_autenticado') {
             onOpenAuth();
@@ -122,7 +176,9 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
         if (!commentText.trim()) return;
         setLoading(true);
         const r = await api.comment(idea.id, commentText);
+        const res = [await api.listComments(idea.id)];
         if (r.ok) {
+            setCommentsList(res)
             setIdea(r.idea);
             setCommentText('');
         }
@@ -173,7 +229,7 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
                 // Caixa de votos (total de votos destacados)
                 e('div', { className: "text-center bg-blue-50 p-4 rounded-xl" },
                     e('div', { className: "text-3xl font-bold text-blue-600" },
-                        (initialVotesLoaded ? idea.votes : '...') || 0
+                        voteCount || 0
                     ),
                     e('div', { className: "text-xs font-medium text-blue-400 uppercase" }, "Votos")
                 )
@@ -267,16 +323,16 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
                 )
             ),
             // Lista de comentários cadastrados na ideia
-            (idea.comments || []).map(c =>
-                e(Card, { key: c.id, className: "p-4" },
+            Object.entries((commentsList && commentsList[0]) || {}).map(([key, value]) =>
+                e(Card, { key: key, className: "p-4" },
                     e('div', { className: "flex justify-between items-start mb-2" },
                         // Nome do autor do comentário (por padrão "Usuário")
-                        e('div', { className: "font-bold text-slate-700" }, "Usuário"),
+                        e('div', { className: "font-bold text-slate-700" }, `#${usersList[key]}`),
                         // Data/hora do comentário (formato local)
-                        e('div', { className: "text-xs text-slate-400" }, new Date(c.created_at).toLocaleString())
+                        e('div', { className: "text-xs text-slate-400" }, new Date(value.created_at).toLocaleString())
                     ),
                     // Texto propriamente dito do comentário
-                    e('p', { className: "text-slate-600" }, c.text)
+                    e('p', { className: "text-slate-600" }, value.text)
                 )
             )
         )

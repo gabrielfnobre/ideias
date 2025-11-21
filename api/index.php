@@ -289,7 +289,6 @@ if ($route === 'ideas/count_votes' && $method === 'POST') {
     exit;
 }
 
-
 // Faz um comentário (ou resposta) em uma ideia específica
 // parent_id é opcional (use para reply em comentário existente)
 if ($route === 'ideas/comment' && $method === 'POST') {
@@ -300,6 +299,29 @@ if ($route === 'ideas/comment' && $method === 'POST') {
     echo json_encode($k->commentIdea($id, $text, $parent));
     exit;
 }
+
+// Retorna todos os textos dos comentários de uma ideia específica usando POST
+if ($route === 'ideas/list_comments' && $method === 'POST') {
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $id = (int)($data['id'] ?? 0);
+    $comments = $k->listCommentsTextsByIdea($id);
+    // Retorna um JSON-Object "direto" no padrão { user_id1: texto1, user_id2: texto2 }
+    header('Content-Type: application/json');
+    echo json_encode($comments, JSON_FORCE_OBJECT);
+    exit;
+}
+
+// Nova condicional: retorna os dados de um usuário via id usando getUserById do kernel
+if ($route === 'user/get' && $method === 'POST') {
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $uid = (int)($data['id'] ?? 0);
+    $user = $k->getUserById($uid);
+    header('Content-Type: application/json');
+    echo json_encode($user ?? []);
+    exit;
+}
+
+
 
 // Atualiza apenas o status da ideia (ex: aprovado, andamento, etc)
 if ($route === 'ideas/update_status' && $method === 'POST') {

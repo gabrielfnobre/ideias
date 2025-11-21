@@ -133,6 +133,15 @@ export const api = {
         return this.request('auth/request-reset', { method: 'POST', body: JSON.stringify({ email }) });
     },
 
+    /**
+     * Busca os dados de um usuário pelo id
+     * @param {number|string} id - ID do usuário
+     * @returns {Promise<object>} Resposta da API (id, email, name, etc)
+     */
+    async getUserById(id) {
+        return this.request('user/get', { method: 'POST', body: JSON.stringify({ id }) });
+    },
+
     // ===================== CAMPANHAS =====================
     /**
      * Lista todas as campanhas cadastradas no sistema.
@@ -215,6 +224,15 @@ export const api = {
      */
     async comment(id, text) {
         return this.request('ideas/comment', { method: 'POST', body: JSON.stringify({ id, text }) });
+    },
+
+    /**
+     * Lista todos os textos dos comentários de uma ideia específica.
+     * @param {number|string} id - ID da ideia
+     * @returns {Promise<object>} Resposta da API com os textos dos comentários
+     */
+    async listComments(id) {
+        return this.request('ideas/list_comments', { method: 'POST', body: JSON.stringify({ id }) });
     },
 
     // ===================== ESTATÍSTICAS & RANKING =====================

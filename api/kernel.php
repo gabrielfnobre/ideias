@@ -680,6 +680,46 @@ class Kernel
     }
 
     /**
+     * Recupera as informações básicas de um usuário pelo seu ID.
+     * Retorna um array associativo com as chaves 'id', 'email' e 'name'.
+     *
+     * @param int $uid ID do usuário.
+     * @return array|null Array associativo ou null se não encontrado.
+     */
+    public function getUserById(int $uid): ?array
+    {
+        $stmt = $this->db->prepare('SELECT id, email, name FROM users WHERE id = ?');
+        $stmt->execute([$uid]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$user) {
+            return null;
+        }
+        return $user;
+    }
+
+    /**
+     * Retorna um array associativo com informações dos comentários de uma ideia específica,
+     * onde a chave é o user_id (autor) e o valor é um array com 'text' e 'created_at' do comentário.
+     *
+     * @param int $id ID da ideia.
+     * @return array Array associativo user_id => ['text' => ..., 'created_at' => ...]
+     */
+    public function listCommentsTextsByIdea(int $id): array
+    {
+        $stmt = $this->db->prepare('SELECT user_id, text, created_at FROM idea_comments WHERE idea_id = ? ORDER BY created_at ASC');
+        $stmt->execute([$id]);
+        $comments = $stmt->fetchAll();
+        $result = [];
+        foreach ($comments as $row) {
+            $result[$row['user_id']] = [
+                'text' => $row['text'],
+                'created_at' => $row['created_at']
+            ];
+        }
+        return $result;
+    }
+
+    /**
      * Lista todos os badges conquistados por um usuário.
      * Inclui código e nome do badge e data em que foi concedido.
      *
