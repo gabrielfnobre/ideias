@@ -45,16 +45,24 @@ class Kernel
      */
     private function connect(): PDO
     {
-        $host = getenv('DB_HOST') ?: 'localhost';
-        $port = getenv('DB_PORT') ?: '3306';
-        $user = getenv('DB_USER') ?: 'root';
-        $pass = getenv('DB_PASS') ?: '';
-        $dbname = getenv('DB_NAME') ?: 'ideias';
+        //================================================
+        // PRODUTION'S DB
+        //================================================
         // $host = getenv('DB_HOST') ?: '191.252.181.20';
         // $port = getenv('DB_PORT') ?: '3306';
         // $user = getenv('DB_USER') ?: 'inovacao';
         // $pass = getenv('DB_PASS') ?: 'Inovacao@2025';
         // $dbname = getenv('DB_NAME') ?: 'ideias';
+        
+        //================================================
+        // DEVELOPMENT'S DB
+        //================================================
+        $host = getenv('DB_HOST') ?: 'localhost';
+        $port = getenv('DB_PORT') ?: '3306';
+        $user = getenv('DB_USER') ?: 'root';
+        $pass = getenv('DB_PASS') ?: '';
+        $dbname = getenv('DB_NAME') ?: 'ideias';
+
         try {
             // Conecta ao MySQL sem banco inicialmente para poder criar o banco na sequência.
             $pdo = new PDO("mysql:host={$host};port={$port};charset=utf8mb4", $user, $pass, [
