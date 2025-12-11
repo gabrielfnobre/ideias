@@ -250,5 +250,20 @@ export const api = {
      */
     async getLeaderboard() {
         return this.request('stats/leaderboard');
-    }
+    },
+
+    /**
+     * Busca foto do usuário pelo REGISTER do colaborador.
+     * @param {string|number} register - Código (REGISTER) do colaborador
+     * @returns {Promise<object>} Resposta da API com a foto ou erro
+     */
+    async getUserPhoto(register) {
+        return this.request('user/photo', { 
+            method: 'POST', 
+            body: JSON.stringify({ register }) 
+        });
+    },
 };
+
+// Exemplo de uso para testar:
+api.getUserPhoto('009601').then(console.log);

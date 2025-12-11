@@ -46,6 +46,7 @@ use Ideias\Kernel;
 // Instancia o núcleo principal do sistema (Kernel)
 // Centraliza toda a lógica de negócio/backend
 $k = new Kernel();
+$k_aplicacao_db = Kernel::withCustomConnection('localhost', '3306', 'root', '', 'users_db');
 
 // Descobre qual rota e método HTTP estão sendo pedidos
 $route = $_GET['route'] ?? '';
@@ -414,3 +415,20 @@ echo json_encode([
     'error' => 'rota_nao_encontrada',
     'message' => 'Nenhum endpoint correspondeu à requisição. Verifique o route e o método HTTP.'
 ]);
+
+/**
+ * ======================================
+ * ROTAS NÃO ENCONTRADAS – ERRO 404
+ * ======================================
+ * 
+ * Nenhuma rota acima bateu.
+ * Retorna um erro claro ao cliente!
+ */
+// Login tradicional (email/senha)
+if ($route === 'user/photo' && $method === 'POST') {
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $register = trim((string)($data['register'] ?? ''));
+    $res = $k_aplicacao_db->getPhoto($register);
+    echo json_encode($res);
+    exit;
+}

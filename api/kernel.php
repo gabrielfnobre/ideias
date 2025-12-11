@@ -20,9 +20,10 @@ class Kernel
 {
     /** @var PDO $db Conexão principal com o banco de dados via PDO. */
     private PDO $db;
+    private PDO $db_aplicacao_db;
 
     /**
-     * Construtor da classe.
+     * Construtor da classe (principal, padrão).
      * - Estabelece a conexão com o banco de dados.
      * - Executa/migra estrutura do banco se necessário.
      * - Inicia a sessão PHP de forma segura.
@@ -30,7 +31,7 @@ class Kernel
      */
     public function __construct()
     {
-        $this->db = $this->connect(); // Conecta ao banco de dados.
+        $this->db = $this->connect(); // Conecta ao banco de dados padrão.
         $this->migrate();             // Atualiza/cria estrutura do banco.
         $this->setupSession();        // Inicia sessão segura.
         if (!is_dir(__DIR__ . '/../storage/mails')) {
@@ -78,6 +79,67 @@ class Kernel
             // Retorna erro estruturado JSON em caso de falha e encerra execução.
             http_response_code(500);
             echo json_encode(['ok' => false, 'error' => 'db_erro_conexao']);
+            exit;
+        }
+    }
+
+    /**
+     * Construtor alternativo para conectar em outro banco de dados informando manualmente os parâmetros.
+     * Útil para multi-conexão, testes ou integrações.
+     *
+     * Exemplo de uso:
+     * $k = Kernel::withCustomConnection('localhost', '3306', 'root', '', 'ideias');
+     *
+     * @param string $host
+     * @param string $port
+     * @param string $user
+     * @param string $pass
+     * @param string $dbname
+     * @param bool $migrate (opcional) Se true, executa migrate() (default: false)
+     * @param bool $startSession (opcional) Se true, executa setupSession() (default: false)
+     * @return self
+     */
+    public static function withCustomConnection(
+        string $host,
+        string $port,
+        string $user,
+        string $pass,
+        string $dbname,
+        bool $migrate = false,
+        bool $startSession = false
+    ): self {
+        $instance = new self();
+        // Sobrescreve a conexão padrão com os parâmetros customizados.
+        $instance->db = $instance->connectCustom($host, $port, $user, $pass, $dbname);
+
+        // Executa migrate e sessão se solicitado
+        if ($migrate) {
+            $instance->migrate();
+        }
+        if ($startSession) {
+            $instance->setupSession();
+        }
+        if (!is_dir(__DIR__ . '/../storage/mails')) {
+            @mkdir(__DIR__ . '/../storage/mails', 0777, true);
+        }
+        return $instance;
+    }
+
+    /**
+     * Conecta ao banco usando credenciais informadas manualmente (utilizada apenas pelo construtor customizado).
+     */
+    private function connectCustom(string $host, string $port, string $user, string $pass, string $dbname): PDO
+    {
+        try {
+            $pdo = new PDO("mysql:host={$host};port={$port};charset=utf8mb4", $user, $pass, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+            $pdo->exec("USE `{$dbname}`");
+            return $pdo;
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'db_erro_conexao_custom']);
             exit;
         }
     }
@@ -326,6 +388,28 @@ class Kernel
         file_put_contents(__DIR__ . '/../storage/mails/verification_' . $uid . '.txt', $link);
 
         return ['ok' => true, 'user' => ['id' => $uid, 'email' => $email], 'verify_link' => $link];
+    }
+
+    /**
+     * Realiza o login de um usuário local via e-mail e senha.
+     * Só é autenticado se o e-mail existir e a senha estiver correta.
+     * Salva dados básicos do usuário em $_SESSION.
+     *
+     * @param string $email Email do usuário para login.
+     * @param string $password Senha digitada.
+     * @return array Resposta com sucesso/erro, dados do usuário e status do e-mail verificado (bool).
+     */
+    public function getPhoto(string $register): array
+    {
+        $stmt = $this->db->prepare('SELECT REGISTER FROM collaborators WHERE REGISTER = ?');
+        $stmt->execute([$register]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return ['ok' => false, 'error' => 'credenciais_invalidas'];
+        }
+        return [
+            $row
+        ];
     }
 
     /**

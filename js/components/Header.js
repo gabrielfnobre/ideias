@@ -69,6 +69,8 @@ export const Header = ({
     setView,
     onCreateIdea
 }) => {
+    
+    
     /**
      * Estado local:
      * isMobileMenuOpen: controla abertura do menu lateral/hambúrguer no mobile.
@@ -141,9 +143,13 @@ export const Header = ({
                 ),
                 // === MENU PRINCIPAL DESKTOP ===
                 e('nav', { className: "hidden md:flex items-center gap-1" },
-                    navItems.map(item =>
+                    navItems.map(item => {
+                        if(!user && (item.id == 'Dashboard' || item.id == 'Kanban')){
+                            return;
+                        }
+
                         // Um botão por seção. Se for a atual, destaque visual.
-                        e('button', {
+                        return e('button', {
                             key: item.id,
                             onClick: () => setView(item.id),
                             className:
@@ -153,6 +159,9 @@ export const Header = ({
                                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                                 }`
                         }, item.label)
+                    }
+
+                        
                     ),
                     // Botão "+ Nova Ideia" (criação rápida). Só aparece aqui (desktop).
                     e(Button, {
@@ -172,6 +181,22 @@ export const Header = ({
                             e('div', {
                                 className: "text-xs text-slate-500"
                             }, `${user.points || 0} pts`)
+                        ),
+                        // Foto redonda do usuário (desktop >= sm)
+                        e('div', { className: "hidden sm:flex items-center mr-2" },
+                            e('div', {
+                                className: "w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center border border-slate-300"
+                            },
+                                user.photoURL
+                                    ? e('img', {
+                                        src: user.photoURL,
+                                        alt: user.name,
+                                        className: "w-full h-full object-cover"
+                                    })
+                                    : e('span', {
+                                        className: "text-slate-400 text-lg select-none"
+                                    }, user.name && user.name[0] ? user.name[0].toUpperCase() : 'U')
+                            )
                         ),
                         // Botão Sair (desktop >= md)
                         e(Button, {
