@@ -105,8 +105,7 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }) => {
         let res;
         try {
             if (mode === 'login') {
-                // LOGIN: envia só e-mail e senha para a API
-                res = await api.login({ email: formData.email, password: formData.password });
+                res = await api.login({ cpf: (formData.cpf).replaceAll('.','').replace('-',''), password: formData.password });
             } else {
                 // CADASTRO: envia nome, e-mail e senha (pode adaptar se houver campos extra)
                 res = await api.signup(formData);
@@ -154,13 +153,13 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange: e => handleChange('name', e.target.value)
             }),
 
-            // Campo E-mail (sempre obrigatório)
+            // Campo CPF (sempre obrigatório)
             e(Input, {
-                label: "E-mail Corporativo",
-                id: "auth-email",
-                type: "email",
-                value: formData.email,
-                onChange: e => handleChange('email', e.target.value)
+                label: "CPF",
+                id: "auth-cpf",
+                type: "cpf",
+                value: formData.cpf,
+                onChange: e => handleChange('cpf', e.target.value)
             }),
 
             // Campo Senha (sempre obrigatório)

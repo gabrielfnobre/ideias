@@ -361,33 +361,21 @@ class Kernel
      * @param string $name (Opcional) Nome do usuário.
      * @return array Resposta estruturada JSON.
      */
-    public function signup(string $email, string $password, string $name = ''): array
+    public function signup(string $id, string $name, string $email): array
     {
-        if ($email === '' || $password === '') {
+        if ($id === '' || $name === '' || $email === '') {
             return ['ok' => false, 'error' => 'dados_invalidos'];
         }
-        $stmt = $this->db->prepare('SELECT id FROM users WHERE email = ?');
-        $stmt->execute([$email]);
+        $stmt = $this->db->prepare('SELECT id, name, email FROM users WHERE id = ?');
+        $stmt->execute([$id]);
         if ($stmt->fetch()) {
-            return ['ok' => false, 'error' => 'email_existente'];
+            $stmt = $this->db->prepare('UPDATE users SET id = :id, email = :email, name = :name WHERE id = :id');
+            $stmt->execute([':id' => $id, ':email' => $email, ':name' => $name]);
+            return ['ok' => true];
         }
-        $hash = $this->hashPassword($password);
-        $stmt = $this->db->prepare('INSERT INTO users(email, name, password_hash) VALUES(?,?,?)');
-        $stmt->execute([$email, $name ?: null, $hash]);
-        $uid = (int)$this->db->lastInsertId();
-
-        // Cria token e salva registro para verificação de e-mail
-        $token = $this->randToken();
-        $tokenHash = $this->hashToken($token);
-        $expires = (new \DateTimeImmutable('+2 hours'))->format('Y-m-d H:i:s');
-        $stmt = $this->db->prepare('INSERT INTO email_verifications(user_id, token_hash, expires_at) VALUES(?,?,?)');
-        $stmt->execute([$uid, $tokenHash, $expires]);
-
-        // Salva link de verificação em arquivo local para consulta/debug
-        $link = 'http://localhost:8000/api/index.php?route=auth/verify&uid=' . $uid . '&token=' . $token;
-        file_put_contents(__DIR__ . '/../storage/mails/verification_' . $uid . '.txt', $link);
-
-        return ['ok' => true, 'user' => ['id' => $uid, 'email' => $email], 'verify_link' => $link];
+        $stmt = $this->db->prepare('INSERT INTO users(id, email, name) VALUES(?,?,?)');
+        $stmt->execute([$id, $email, $name]);
+        return ['ok' => true];
     }
 
     /**
@@ -425,30 +413,52 @@ class Kernel
      * @param string $password Senha digitada.
      * @return array Resposta com sucesso/erro, dados do usuário e status do e-mail verificado (bool).
      */
-    public function login(string $email, string $password): array
+    public function login(string $cpf, string $password): array
     {
-        $stmt = $this->db->prepare('SELECT id, password_hash, email_verified, register, name FROM users WHERE email = ?');
-        $stmt->execute([$email]);
+        $stmt = $this->db->prepare('SELECT TK_SS, EMAIL, REGISTER, USER_PHOTO, USER_PASSWORD, NAME FROM collaborators WHERE CPF = ? ORDER BY REGISTER ASC');
+        $stmt->execute([$cpf]);
         $row = $stmt->fetch();
         if (!$row) {
             return ['ok' => false, 'error' => 'credenciais_invalidas'];
         }
-        if (!password_verify($password, (string)$row['password_hash'])) {
-            return ['ok' => false, 'error' => 'credenciais_invalidas'];
+        
+        // Validação da senha embaralhada.
+        function embaralhaSenha($senha) {
+            if(strlen($senha) !== 6) return $senha;
+            return $senha[1].$senha[3].$senha[5].$senha[0].$senha[2].$senha[4];
         }
-        $_SESSION['uid'] = (int)$row['id'];
-        $_SESSION['name'] = (string)($row['name'] ?? '');
-        $_SESSION['email'] = $email;
-        $_SESSION['register'] = (string)($row['register'] ?? '');
+
+        $senhaEmbaralhada = (string)($row['USER_PASSWORD'] ?? '');
+        $senhaDigitadaEmbaralhada = embaralhaSenha($password);
+
+        if ($senhaEmbaralhada !== $senhaDigitadaEmbaralhada) {
+            return ['ok' => false, 'error' => 'senha inválida'];
+        }
+
+        $_SESSION['uid'] = (string)$row['REGISTER'];
+        $_SESSION['name'] = (string)($row['NAME'] ?? '');
+        $_SESSION['email'] = (string)($row['EMAIL'] ?? '');
+        $_SESSION['cpf'] = (string)($row['CPF'] ?? '');
+        $_SESSION['register'] = (string)($row['TK_SS'] ?? '');
+        $_SESSION['user_photo'] = (string)($row['USER_PHOTO'] ?? '');
+
+        $id_s = (string)$row['REGISTER'];
+        $name_s = (string)($row['NAME'] ?? '');
+        $email_s = (string)($row['EMAIL'] ?? '');
+
+        $kernel = new self($this->db); // Novo construtor da classe atual
+        $kernel->signup($id_s, $name_s, $email_s);
+
         return [
             'ok' => true,
             'user' => [
-                'id' => (int)$row['id'],
-                'email' => $email,
-                'name' => (string)($row['name'] ?? ''),
-                'register' => (string)($row['register'] ?? ''),
+                'id' => (string)$row['REGISTER'],
+                'email' => (string)($row['EMAIL'] ?? ''),
+                'cpf' => (string)($row['CPF'] ?? ''),
+                'name' => (string)($row['NAME'] ?? ''),
+                'register' => (string)($row['TK_SS'] ?? ''),
+                'photo' => (string)($row['USER_PHOTO'] ?? ''),
             ],
-            'email_verified' => (bool)$row['email_verified'],
         ];
     }
 

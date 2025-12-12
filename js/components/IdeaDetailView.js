@@ -51,12 +51,14 @@
  */
 import { api } from '../services/api.js';
 import { Card, Badge, Button } from './ui/index.js';
+import { Modal } from './ui/index.js';
 const e = React.createElement;
 
 export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal = false }) => {
     // Estado local que guarda os dados atualizados da ideia.
     // Sempre usar este estado para exibir dados, pois pode ser atualizado após voto ou comentário.
     const [idea, setIdea] = React.useState(initialIdea);
+    const [showMesageModal, setShowMesageModal] = React.useState(false);
     const [initialVotesLoaded, setInitialVotesLoaded] = React.useState(false);
 
     // Armazena o texto digitado no campo de novo comentário.
@@ -154,12 +156,24 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
     const handleVote = async () => {
         const r = await api.vote(idea.id);
         if (r.ok) {
-            setVoteCount(r.votes);
-            setIdea(prev => ({ ...prev, votes: r.votes }));
+            if(idea.status === 'APROVADA'){
+                setVoteCount(r.votes);
+                setIdea(prev => ({ ...prev, votes: r.votes }));
+            } else {
+                setShowMesageModal(true)
+            }
         } else if (r.error === 'nao_autenticado') {
             onOpenAuth();
         }
     };
+
+    const modal_de_alerta = showMesageModal ? Modal({
+        isOpen: true,
+        title: `Esta ideia não pode receber votações, pois ela está "${idea.status.toLowerCase().replaceAll('_', ' ')}."`,
+        children: [],
+        no_body: true,
+        onClose: () => setShowMesageModal(false),
+    }) : '';
 
     /**
      * Função: handleComment
@@ -183,7 +197,9 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
         setLoading(false);
     };
 
-    return e('div', {
+    return e(React.Fragment, null, 
+        modal_de_alerta,
+        e('div', {
             className: `max-w-4xl mx-auto space-y-6 animate-in slide-in-from-right-8 duration-300 ${isModal ? '' : 'py-8'}`
         },
 
@@ -334,5 +350,5 @@ export const IdeaDetailView = ({ idea: initialIdea, onBack, onOpenAuth, isModal 
                 )
             )
         )
-    );
+    ));
 };

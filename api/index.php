@@ -108,9 +108,9 @@ if ($route === 'auth/signup' && $method === 'POST') {
 // Login tradicional (email/senha)
 if ($route === 'auth/login' && $method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
-    $email = trim((string)($data['email'] ?? ''));
+    $cpf = trim((string)($data['cpf'] ?? ''));
     $password = (string)($data['password'] ?? '');
-    $res = $k->login($email, $password);
+    $res = $k_aplicacao_db->login($cpf, $password);
     echo json_encode($res);
     exit;
 }

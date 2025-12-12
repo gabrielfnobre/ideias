@@ -148,7 +148,94 @@ export const Card = ({ children, className = '', ...props }) => {
  *   Sempre use label, pois ajuda usuários (e leitores de tela) a saber para que serve o campo!
  *   Coloque um id único quando for usar label.
  */
-export const Input = ({ label, id, className = '', ...props }) => {
+
+// Função para formatar o valor em formato de CPF (XXX.XXX.XXX-XX)
+function formatCPF(value) {
+    // Remove tudo que não é número
+    const v = value.replace(/\D/g, '').slice(0, 11);
+    // Aplica a máscara
+    if (v.length <= 3) return v;
+    if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, '$1.$2');
+    if (v.length <= 9) return v.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+    return v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, '$1.$2.$3-$4');
+}
+
+// Função para validar um CPF (retorna true se CPF for válido)
+function validateCPF(cpf) {
+    cpf = (cpf || "").replace(/[^\d]+/g,'');
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+    let sum = 0, rest;
+    for (let i=1; i<=9; i++) sum += parseInt(cpf.substring(i-1,i)) * (11-i);
+    rest = (sum * 10) % 11;
+    if ((rest === 10) || (rest === 11)) rest = 0;
+    if (rest !== parseInt(cpf.substring(9,10))) return false;
+    sum = 0;
+    for (let i=1; i<=10; i++) sum += parseInt(cpf.substring(i-1,i)) * (12-i);
+    rest = (sum * 10) % 11;
+    if ((rest === 10) || (rest === 11)) rest = 0;
+    if (rest !== parseInt(cpf.substring(10,11))) return false;
+    return true;
+}
+
+export const Input = ({ label, id, className = '', type, value, onChange, ...props }) => {
+    // Se for tipo cpf, vamos formatar e validar internamente
+    const isCpf = type === 'cpf';
+    // Estado local para input de cpf -- mas mantenha controlado de acordo com os props
+    const [localValue, setLocalValue] = React.useState(value || '');
+
+    // Sincroniza estado local e externo caso value mude ("componente controlado")
+    React.useEffect(() => {
+        if (isCpf && value !== localValue) {
+            setLocalValue(formatCPF(value ?? ''));
+        }
+        // eslint-disable-next-line
+    }, [value]);
+
+    function handleInputChange(ev) {
+        let val = ev.target.value;
+        if (isCpf) {
+            val = formatCPF(val);
+            setLocalValue(val);
+            // Remove a máscara para passar somente números pro callback, se desejar
+            if (onChange) {
+                // Notifica também se válido via e.target.isValid
+                const fakeEvent = {
+                    ...ev,
+                    target: {
+                        ...ev.target,
+                        value: val,
+                        // Informar para callback se cpf está válido
+                        isValid: validateCPF(val)
+                    }
+                };
+                onChange(fakeEvent);
+            }
+        } else if (onChange) {
+            onChange(ev);
+        }
+    }
+
+    const inputProps = {
+        id,
+        className: `w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all ${className}`,
+        ...(isCpf
+            ? {
+                value: localValue,
+                onChange: handleInputChange,
+                maxLength: 14, // "XXX.XXX.XXX-XX"
+                inputMode: 'numeric',
+                autoComplete: "off",
+                type: "text"
+            }
+            : {
+                value,
+                onChange,
+                type
+            }
+        ),
+        ...props
+    };
+
     return e(
         'div',
         { className: "space-y-1" },
@@ -158,14 +245,7 @@ export const Input = ({ label, id, className = '', ...props }) => {
                 { htmlFor: id, className: "block text-sm font-medium text-slate-700" },
                 label
             ),
-        e(
-            'input',
-            {
-                id,
-                className: `w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all ${className}`,
-                ...props
-            }
-        )
+        e('input', inputProps)
     );
 };
 
@@ -249,26 +329,43 @@ export const Badge = ({ children, variant = 'default' }) => {
  * DICA DE USO:
  *   Só use um modal por vez, para não confundir o usuário.
  */
-export const Modal = ({ isOpen, onClose, title, children }) => {
+export const Modal = ({ 
+        isOpen, 
+        onClose = () => {
+            let modal = document.getElementById('modal_close');
+            if (modal) {
+                modal.parentNode && modal.parentNode.removeChild(modal);
+            }
+        },
+        title, 
+        children, 
+        color_title="text-slate-800",
+        bg_color="bg-white",
+        no_body = false
+    }) => {
     if (!isOpen) return null;
+    // Basta receber uma prop 'id' e repassá-la no atributo id (ou repassar qualquer outra prop para <div>):
     return e(
         'div',
-        { className: "fixed inset-0 z-50 flex items-center justify-center p-4" },
+        { 
+            id: "modal_close", // agora o id é dinâmico (via props)
+            className: `fixed inset-0 z-50 flex items-center justify-center p-4`,
+        },
         // Fundo escurecido — clicar nele fecha o modal!
         e('div', { className: "absolute inset-0 bg-slate-900/40 backdrop-blur-sm", onClick: onClose }),
         // Caixa principal do modal
         e('div',
             {
                 className:
-                    "relative w-full max-w-lg bg-white rounded-2xl shadow-2xl shadow-blue-900/20 animate-in fade-in zoom-in duration-200"
+                    `relative w-full max-w-lg ${bg_color} rounded-2xl shadow-2xl shadow-blue-900/20 animate-in fade-in zoom-in duration-200`
             },
             // Cabeçalho do modal
-            e('div', { className: "flex items-center justify-between p-6 border-b border-slate-100" },
-                e('h3', { className: "text-xl font-bold text-slate-800" }, title),
+            e('div', { className: `flex items-center justify-between p-6 ${no_body ? '' : "border-b border-slate-100"}` },
+                e('h3', { className: `text-xl font-bold ${color_title}` }, title),
                 e('button', { onClick: onClose, className: "text-slate-400 hover:text-slate-600", 'aria-label': 'Fechar' }, "✕")
             ),
             // Corpo do modal
-            e('div', { className: "p-6" }, children)
+            no_body ? '' : e('div', { className: "p-6" }, children)
         )
     );
 };
