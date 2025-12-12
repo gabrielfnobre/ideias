@@ -49,20 +49,20 @@ class Kernel
         //================================================
         // PRODUTION'S DB
         //================================================
-        // $host = getenv('DB_HOST') ?: '191.252.181.20';
-        // $port = getenv('DB_PORT') ?: '3306';
-        // $user = getenv('DB_USER') ?: 'inovacao';
-        // $pass = getenv('DB_PASS') ?: 'Inovacao@2025';
-        // $dbname = getenv('DB_NAME') ?: 'ideias';
+        $host = getenv('DB_HOST') ?: '191.252.181.20';
+        $port = getenv('DB_PORT') ?: '3306';
+        $user = getenv('DB_USER') ?: 'inovacao';
+        $pass = getenv('DB_PASS') ?: 'Inovacao@2025';
+        $dbname = getenv('DB_NAME') ?: 'ideias';
         
         //================================================
         // DEVELOPMENT'S DB
         //================================================
-        $host = getenv('DB_HOST') ?: 'localhost';
-        $port = getenv('DB_PORT') ?: '3306';
-        $user = getenv('DB_USER') ?: 'root';
-        $pass = getenv('DB_PASS') ?: '';
-        $dbname = getenv('DB_NAME') ?: 'ideias';
+        // $host = getenv('DB_HOST') ?: 'localhost';
+        // $port = getenv('DB_PORT') ?: '3306';
+        // $user = getenv('DB_USER') ?: 'root';
+        // $pass = getenv('DB_PASS') ?: '';
+        // $dbname = getenv('DB_NAME') ?: 'ideias';
 
         try {
             // Conecta ao MySQL sem banco inicialmente para poder criar o banco na sequência.
@@ -391,24 +391,28 @@ class Kernel
     }
 
     /**
-     * Realiza o login de um usuário local via e-mail e senha.
-     * Só é autenticado se o e-mail existir e a senha estiver correta.
-     * Salva dados básicos do usuário em $_SESSION.
+     * Obtém a foto do usuário (colaborador) a partir do seu REGISTER.
      *
-     * @param string $email Email do usuário para login.
-     * @param string $password Senha digitada.
-     * @return array Resposta com sucesso/erro, dados do usuário e status do e-mail verificado (bool).
+     * Este método consulta a tabela 'collaborators' no banco, buscando o valor do campo USER_PHOTO correspondente
+     * ao REGISTER (código do colaborador) informado. 
+     *
+     * Usado normalmente para exibir o avatar/foto do colaborador no frontend.
+     * Retorna erro estruturado caso o registro não exista ou não encontre a foto.
+     * 
+     * @param string $register Código (REGISTER) único do colaborador.
+     * @return array Se houver, retorna array ['ok' => true, 'photo' => string (base64 ou URL)], caso contrário retorna ['ok' => false, 'error' => 'nao_encontrado']
      */
     public function getPhoto(string $register): array
     {
-        $stmt = $this->db->prepare('SELECT REGISTER FROM collaborators WHERE REGISTER = ?');
+        $stmt = $this->db->prepare('SELECT USER_PHOTO FROM collaborators WHERE REGISTER = ?');
         $stmt->execute([$register]);
         $row = $stmt->fetch();
-        if (!$row) {
-            return ['ok' => false, 'error' => 'credenciais_invalidas'];
+        if (!$row || empty($row['USER_PHOTO'])) {
+            return ['ok' => false, 'error' => 'nao_encontrado'];
         }
         return [
-            $row
+            'ok' => true,
+            'photo' => $row['USER_PHOTO']
         ];
     }
 
@@ -423,7 +427,7 @@ class Kernel
      */
     public function login(string $email, string $password): array
     {
-        $stmt = $this->db->prepare('SELECT id, password_hash, email_verified, name FROM users WHERE email = ?');
+        $stmt = $this->db->prepare('SELECT id, password_hash, email_verified, register, name FROM users WHERE email = ?');
         $stmt->execute([$email]);
         $row = $stmt->fetch();
         if (!$row) {
@@ -435,12 +439,14 @@ class Kernel
         $_SESSION['uid'] = (int)$row['id'];
         $_SESSION['name'] = (string)($row['name'] ?? '');
         $_SESSION['email'] = $email;
+        $_SESSION['register'] = (string)($row['register'] ?? '');
         return [
             'ok' => true,
             'user' => [
                 'id' => (int)$row['id'],
                 'email' => $email,
-                'name' => (string)($row['name'] ?? '')
+                'name' => (string)($row['name'] ?? ''),
+                'register' => (string)($row['register'] ?? ''),
             ],
             'email_verified' => (bool)$row['email_verified'],
         ];
@@ -900,6 +906,23 @@ class Kernel
     {
         $stmt = $this->db->prepare("UPDATE ideas SET status = :status WHERE id = :id");
         $stmt->execute([':status' => $status, ':id' => $id]);
+        return ['ok' => true];
+    }
+    
+    /**
+     * Atualiza o status de uma ideia específica.
+     * Status padrão: "EM_ELABORACAO", "EM_TRIAGEM", "APROVADA", "REJEITADA", entre outros.
+     *
+     * @param int $id ID da ideia.
+     * @param string $status Novo status a ser atribuído.
+     * @return array ok em caso de sucesso.
+     */
+    public function update_register(int $id, string $register): array
+    {
+        $stmt = $this->db->prepare("UPDATE users SET register = :register WHERE id = :id");
+        $stmt->execute([':register' => $register, ':id' => $id]);
+        $row = $stmt->fetch();
+        $_SESSION['register'] = (string)($row['register'] ?? '');
         return ['ok' => true];
     }
 

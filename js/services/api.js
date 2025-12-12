@@ -263,7 +263,27 @@ export const api = {
             body: JSON.stringify({ register }) 
         });
     },
-};
 
-// Exemplo de uso para testar:
-api.getUserPhoto('009601').then(console.log);
+    /**
+     * Atualiza o campo 'register' de um usuário (matrícula/código de colaborador) no backend.
+     * 
+     * @async
+     * @function setRegister
+     * @param {number|string} id - ID do usuário a ser atualizado.
+     * @param {string|number} register - Novo valor da matrícula (REGISTER) do colaborador.
+     * @returns {Promise<object>} Retorna a resposta da API.
+     * 
+     * Esta função faz uma requisição POST para o endpoint 'user/update_register', enviando o ID do usuário
+     * e o novo valor de register a ser salvo no banco de dados. Caso o registro seja realizado com sucesso,
+     * o backend retorna um objeto com a propriedade 'ok' igual a true.
+     * 
+     * Exemplo de uso:
+     *    await api.setRegister(3, '001234');
+     */
+    async setRegister(id, register) {
+        return this.request('user/update_register', { 
+            method: 'POST', 
+            body: JSON.stringify({ id, register }) 
+        });
+    },
+};

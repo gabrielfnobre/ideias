@@ -1,4 +1,5 @@
 import { Button } from './ui/index.js';
+import { api } from '../services/api.js';
 const e = React.createElement;
 
 /**
@@ -69,13 +70,45 @@ export const Header = ({
     setView,
     onCreateIdea
 }) => {
-    
-    
+
     /**
      * Estado local:
      * isMobileMenuOpen: controla abertura do menu lateral/hambúrguer no mobile.
      */
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [showUserModal, setShowUserModal] = React.useState(false);
+    const [matriculaInput, setMatriculaInput] = React.useState(false);
+    const [erroMatricula, setErroMatricula] = React.useState(false);
+    const [userPhoto, setUserPhoto] = React.useState('');
+
+    console.log(JSON.parse(localStorage.getItem('user')));
+
+    // O problema está no array de dependências e lógica do useEffect.
+    // Você está dependendo de [userPhoto], porém deveria depender de [user]
+    // para buscar a foto sempre que mudar o usuário.
+    // Além disso, você precisa atualizar o estado com a foto recebida.
+    // Assim, evita o ciclo duplo e processa na hora certa.
+
+    // Remova logs depois de debugar.
+    React.useEffect(() => {
+        if (user && user.register) {
+            api.getUserPhoto(user.register).then(res => {
+                if (res && res.ok && res.photo) {
+                    setUserPhoto(`./../conectarh/fotos/${res.photo}`);
+                    setErroMatricula(false);
+                } else {
+                    // Se não encontrar ou erro, zere/coloque placeholder e marque erro se quiser.
+                    setUserPhoto('');
+                    setErroMatricula(true);
+                }
+            }).catch(() => {
+                setUserPhoto('');
+                setErroMatricula(true);
+            });
+        } else {
+            setUserPhoto('');
+        }
+    }, [user]);
 
     /**
      * navItems: Define as seções principais disponíveis no sistema.
@@ -112,10 +145,106 @@ export const Header = ({
         setIsMobileMenuOpen(false);
     };
 
+    // ==== MODAL PARA USUÁRIO ====
+    const modal = showUserModal ? 
+        e('div', {
+            className: "fixed z-[100] inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm",
+            onClick: (e_) => {
+                if (e_.target === e_.currentTarget) setShowUserModal(false);
+            },
+        },
+            e('div', {
+                className: "bg-white rounded-xl shadow-2xl max-w-xs w-full p-6 flex flex-col items-center relative"
+            },
+                e('button', {
+                    className: "absolute top-3 right-3 text-slate-400 hover:text-slate-700 text-2xl font-bold",
+                    onClick: () => setShowUserModal(false),
+                    tabIndex: 0,
+                    'aria-label': "Fechar modal"
+                }, '×'),
+                user && e(React.Fragment, null,
+                    e('div', {
+                        className: "w-20 h-20 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center border border-slate-300 mb-3"
+                    },
+                        user.register
+                            ? e('img', {
+                                src: userPhoto,
+                                alt: user.name,
+                                className: "w-full h-full object-cover"
+                            })
+                            : e('span', {
+                                className: "text-slate-400 text-2xl select-none"
+                            }, user.name && user.name[0] ? user.name[0].toUpperCase() : 'U')
+                    ),
+                    e('div', {
+                            className: "text-lg font-semibold text-slate-900 text-center mb-1"
+                        },
+                        user.register ? user.name : [
+                            e('div', {
+                                className: "text-sm font-medium text-slate-900"
+                            }, user.name),
+                            e('div', {
+                                className: "text-xs text-slate-500"
+                            }, `${user.points || 0} pts`),
+                            e('div', { className: "flex flex-col items-center w-full mb-4 mt-4" },
+                                e('input', {
+                                    type: "text",
+                                    inputMode: "numeric",
+                                    pattern: "[0-9]*",
+                                    maxLength: 6,
+                                    value: matriculaInput || "",
+                                    onChange: (e_) => {
+                                        // Apenas números, máximo 6 caracteres
+                                        const val = e_.target.value.replace(/\D/g, '').slice(0,6);
+                                        setMatriculaInput(val);
+                                        if (erroMatricula) setErroMatricula('');
+                                    },
+                                    placeholder: "Digite sua Matrícula (6 dígitos)",
+                                    className: "w-full border border-slate-300 rounded px-3 py-2 text-sm mb-2 focus:outline-none focus:ring focus:border-blue-400"
+                                }),
+                                erroMatricula && e('div', { className: "text-red-500 text-xs mb-2 w-full text-center" }, erroMatricula),
+                                e(Button, {
+                                    className: "text-sm text-slate-500 text-center",
+                                    onClick: () => {
+                                        let val = matriculaInput || "";
+                                        // Completar com zeros à esquerda
+                                        val = val.padStart(6, '0');
+                                        if (!/^\d{6}$/.test(val)) {
+                                            setErroMatricula("A matrícula deve conter exatamente 6 dígitos numéricos.");
+                                            return;
+                                        }
+                                        setErroMatricula('');
+                                        handleMatriculaSubmit(val);
+                                    },
+                                }, "Adicione sua Matrícula")
+                            )
+                        ]
+                    ) 
+                )
+            )
+        ) : null;
+
+    async function handleMatriculaSubmit(val){
+        let resp = await api.getUserPhoto(val);
+        if(resp.ok && user){
+            api.setRegister(user.id, val);
+            const user_local = localStorage.getItem('user');
+            if(user_local){
+                let local_storage_json = JSON.parse(user_local);
+                local_storage_json.register = val;
+                local_storage_json = JSON.stringify(local_storage_json);
+                localStorage.setItem('user', local_storage_json);
+                window.location.reload();
+            }
+        }
+    }
+
     // ---- RENDERIZAÇÃO VISUAL ----
-    return e('header', {
-        className: "sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200"
-    },
+    return e(React.Fragment, null, 
+        modal,
+        e('header', {
+            className: "sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200"
+        },
         // Conteúdo centralizado, com responsividade máxima para desktop/telas grandes
         e('div', { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" },
             // Linha principal do header: logo/título | menu | infos/ações de usuário
@@ -171,32 +300,41 @@ export const Header = ({
                     }, "+ Nova Ideia")
                 ),
                 // === SEÇÃO INFO DO USUÁRIO E MENU MOBILE ===
-                e('div', { className: "flex items-center gap-3" },
-                    user ? e(React.Fragment, null,
-                        // Se logado: mostra nome e pontos (desktop >= sm)
-                        e('div', { className: "text-right hidden sm:block" },
-                            e('div', {
-                                className: "text-sm font-medium text-slate-900"
-                            }, user.name),
-                            e('div', {
-                                className: "text-xs text-slate-500"
-                            }, `${user.points || 0} pts`)
-                        ),
-                        // Foto redonda do usuário (desktop >= sm)
-                        e('div', { className: "hidden sm:flex items-center mr-2" },
-                            e('div', {
-                                className: "w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center border border-slate-300"
+                e('div', {className: "flex items-center gap-3"},
+                    user ? 
+                    e(React.Fragment, null,
+                        e('div', {
+                                className: "flex gap-3 transition-transform duration-150 hover:scale-105 cursor-pointer",
+                                // Exemplo: ao clicar, abre modal do usuário
+                                onClick: () => {
+                                    setShowUserModal(true);
+                                },  
                             },
-                                user.photoURL
-                                    ? e('img', {
-                                        src: user.photoURL,
-                                        alt: user.name,
-                                        className: "w-full h-full object-cover"
-                                    })
-                                    : e('span', {
-                                        className: "text-slate-400 text-lg select-none"
-                                    }, user.name && user.name[0] ? user.name[0].toUpperCase() : 'U')
-                            )
+                            // Se logado: mostra nome e pontos (desktop >= sm)
+                            e('div', { className: "text-right hidden sm:block" },
+                                e('div', {
+                                    className: "text-sm font-medium text-slate-900"
+                                }, user.name),
+                                e('div', {
+                                    className: "text-xs text-slate-500"
+                                }, `${user.points || 0} pts`)
+                            ),
+                            // Foto redonda do usuário (desktop >= sm)
+                            e('div', { className: "hidden sm:flex items-center mr-2" },
+                                e('div', {
+                                    className: "w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center border border-slate-300"
+                                },
+                                    user.register
+                                        ? e('img', {
+                                            src: userPhoto,
+                                            alt: user.name,
+                                            className: "w-full h-full object-cover"
+                                        })
+                                        : e('span', {
+                                            className: "text-slate-400 text-lg select-none"
+                                        }, user.name && user.name[0] ? user.name[0].toUpperCase() : 'U')
+                                )
+                            ),
                         ),
                         // Botão Sair (desktop >= md)
                         e(Button, {
@@ -271,5 +409,10 @@ export const Header = ({
                 )
             )
         )
+    )
     );
 };
+
+
+
+
